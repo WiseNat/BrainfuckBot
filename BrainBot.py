@@ -82,7 +82,6 @@ class MainCog(commands.Cog):
 
                 reaction, user = await self.bot.wait_for("reaction_add", check=check)
                 await settings_message.clear_reactions()
-                print(reaction.emoji)
 
             if str(reaction.emoji) == "<:cross:671116183780720670>":
                 await settings_message.delete()
@@ -157,7 +156,6 @@ class MainCog(commands.Cog):
         :var loops: Array holding loop locations for loop logic
         :var pointer: Integer value for the current memory address
         :var pc: Integer value for the current line of code [program counter]
-        :var lc: Integer value for the current output line for console_embed
         """
 
         await ctx.message.delete()
@@ -188,7 +186,6 @@ class MainCog(commands.Cog):
             loops = []  # Loops
             pointer = 0  # Memory Counter
             pc = 0  # Program Counter
-            lc = 1  # Line counter
 
             # Interpreter
             while pc < len(code_string):
@@ -205,10 +202,7 @@ class MainCog(commands.Cog):
                     pointer += 1
 
                 elif code_string[pc] == ".":  # Output memory val as char
-                    if chr(stack[pointer]) == "\n":
-                        lc += 1
-                        console_field_val += "\n"  # **L" + str(lc) + ":**
-                    elif stack[pointer] == 92:
+                    if stack[pointer] == 92:  # Fixing escape code issue
                         console_field_val += "\\"
                     else:
                         console_field_val += chr(stack[pointer])
@@ -217,25 +211,30 @@ class MainCog(commands.Cog):
                     input_info_message = await ctx.send("Do *input <char>")
                     while True:
                         user_inp_message = await self.bot.wait_for("message")
-                        if user_inp_message.content[:6] == "*input" and len(user_inp_message.content[7:]) == 1:
-                            stack[pointer] = ord(user_inp_message.content[7])
-                            break
 
-                        elif user_inp_message.content[:2] == "*i" and len(user_inp_message.content[3:]) == 1:
-                            stack[pointer] = ord(user_inp_message.content[3])
-                            break
+                        # Valid input cmd
+                        if user_inp_message.content[:6] == "*input" or user_inp_message.content[:3] == "*i":
+                            # chars = 1
+                            if len(user_inp_message.content[7:]) == 1:
+                                stack[pointer] = ord(user_inp_message.content[7])
+                                break
 
-                        elif (user_inp_message.content[:6] == "*input" and len(user_inp_message.content[7:]) != 1) or \
-                                (user_inp_message.content[:2] == "*i" and len(user_inp_message.content[3:]) != 1):
-                            error_field_val += "**Error** Input only takes a single character\n"
-                            error_embed.set_field_at(index=0, name="**Error output**", value=error_field_val,
-                                                     inline=False)
-                            await error_message.edit(embed=error_embed)
+                            # chars = 1
+                            elif len(user_inp_message.content[3:]) == 1:
+                                stack[pointer] = ord(user_inp_message.content[3])
+                                break
 
+                            # chars != 1
+                            else:
+                                error_field_val += "**Error** Input only takes a single character\n"
+                                error_embed.set_field_at(index=0, name="**Error output**", value=error_field_val,
+                                                         inline=False)
+                                await error_message.edit(embed=error_embed)
+
+                        # Deleting message if input
                         if user_inp_message.content[:6] == "*input" or user_inp_message.content[:2] == "*i":
                             await user_inp_message.delete()
 
-                    await user_inp_message.delete()
                     await input_info_message.delete()
 
                 elif code_string[pc] == "[":  # Loop start
@@ -254,6 +253,9 @@ class MainCog(commands.Cog):
                 pc += 1
 
             console_field_val += "```"
+            if console_field_val == "``````":
+                console_field_val = "None"
+
             console_embed.set_field_at(index=0, name="**Code output**", value=console_field_val, inline=False)
             await console_message.edit(embed=console_embed)
 
@@ -265,4 +267,4 @@ class MainCog(commands.Cog):
 bf = commands.Bot(command_prefix="*", description="Brainfuck time")
 bf.remove_command("help")
 bf.add_cog(MainCog(bf))
-bf.run(open("secret.token", "r").read())
+bf.run(open("token.secret", "r").read())
