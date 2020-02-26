@@ -172,8 +172,8 @@ class MainCog(commands.Cog):
         out_console_message = await ctx.send(embed=out_console_embed)
 
         # Error embed initialisation
-        sys_console_embed = discord.Embed(title="**Error Log**", colour=0xFF002A)
-        sys_console_embed.add_field(name="**Error output**", value="None", inline=False)
+        sys_console_embed = discord.Embed(title="**System Log**", colour=0xFF002A)
+        sys_console_embed.add_field(name="**System output**", value="None", inline=False)
         sys_console_message = await ctx.send(embed=sys_console_embed)
 
         if code_string == "":
@@ -208,12 +208,14 @@ class MainCog(commands.Cog):
                         out_console_field_val += chr(stack[pointer])
 
                 elif code_string[pc] == ",":  # Input char as val
-                    input_info_message = await ctx.send("Do *input <char>")
+                    sys_console_field_val += "**STDIN** Send *input <char>\n"
+                    sys_console_embed.set_field_at(index=0, name="**Error output**", value=sys_console_field_val, inline=False)
+                    await sys_console_message.edit(embed=sys_console_embed)
                     while True:
                         user_inp_message = await self.bot.wait_for("message")
 
                         # Valid input cmd
-                        if user_inp_message.content[:6] == "*input" or user_inp_message.content[:3] == "*i":
+                        if user_inp_message.content[:6] == "*input" or user_inp_message.content[:2] == "*i":
                             # chars = 1
                             if len(user_inp_message.content[7:]) == 1:
                                 stack[pointer] = ord(user_inp_message.content[7])
@@ -227,15 +229,13 @@ class MainCog(commands.Cog):
                             # chars != 1
                             else:
                                 sys_console_field_val += "**Error** Input only takes a single character\n"
-                                sys_console_embed.set_field_at(index=0, name="**Error output**", value=sys_console_field_val,
-                                                         inline=False)
+                                sys_console_embed.set_field_at(index=0, name="**Error output**",
+                                                               value=sys_console_field_val, inline=False)
                                 await sys_console_message.edit(embed=sys_console_embed)
 
                         # Deleting message if input
                         if user_inp_message.content[:6] == "*input" or user_inp_message.content[:2] == "*i":
                             await user_inp_message.delete()
-
-                    await input_info_message.delete()
 
                 elif code_string[pc] == "[":  # Loop start
                     loops.append(pc)
