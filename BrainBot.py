@@ -141,13 +141,13 @@ class MainCog(commands.Cog):
         :param code_string: String code to be executed by the interpreter
         :param args: Any additional args in the command
 
-        :var console_embed: Discord embed class for the console output
-        :var console_message: Discord message class containing console_embed
-        :var console_field_val: String field value for console_embed
+        :var out_console_embed: Discord embed class for the console output
+        :var out_console_message: Discord message class containing out_console_embed
+        :var out_console_field_val: String field value for out_console_embed
 
-        :var error_embed: Discord embed class for the error output
-        :var error_message: Discord message class containing error_embed
-        :var error_field_val: String field value for error_embed
+        :var sys_console_embed: Discord embed class for the error output
+        :var sys_console_message: Discord message class containing sys_console_embed
+        :var sys_console_field_val: String field value for sys_console_embed
 
         :var input_info_message: Discord message class containing the input request message
         :var user_inp_message: Discord message class containing the users input message
@@ -161,25 +161,25 @@ class MainCog(commands.Cog):
         await ctx.message.delete()
 
         executer = ctx.message.author.id
-        console_field_val = "```"
-        error_field_val = ""
+        out_console_field_val = "```"
+        sys_console_field_val = ""
 
         code_string = "".join(args)
 
         # Console embed initialisation
-        console_embed = discord.Embed(title="**Brainfuck Console**", name="**Code Output**", colour=0x3DE1FF)
-        console_embed.add_field(name="**Code output**", value="None", inline=False)
-        console_message = await ctx.send(embed=console_embed)
+        out_console_embed = discord.Embed(title="**Brainfuck Console**", name="**Code Output**", colour=0x3DE1FF)
+        out_console_embed.add_field(name="**Code output**", value="None", inline=False)
+        out_console_message = await ctx.send(embed=out_console_embed)
 
         # Error embed initialisation
-        error_embed = discord.Embed(title="**Error Log**", colour=0xFF002A)
-        error_embed.add_field(name="**Error output**", value="None", inline=False)
-        error_message = await ctx.send(embed=error_embed)
+        sys_console_embed = discord.Embed(title="**Error Log**", colour=0xFF002A)
+        sys_console_embed.add_field(name="**Error output**", value="None", inline=False)
+        sys_console_message = await ctx.send(embed=sys_console_embed)
 
         if code_string == "":
-            error_field_val += "**Error** Enter a string of instructions to be executed\n"
-            error_embed.set_field_at(index=0, name="**Error output**", value=error_field_val, inline=False)
-            await error_message.edit(embed=error_embed)
+            sys_console_field_val += "**Error** Enter a string of instructions to be executed\n"
+            sys_console_embed.set_field_at(index=0, name="**Error output**", value=sys_console_field_val, inline=False)
+            await sys_console_message.edit(embed=sys_console_embed)
         else:
             code_string = code_string.replace("\n", "")
             stack = [0] * 30000  # Memory
@@ -203,9 +203,9 @@ class MainCog(commands.Cog):
 
                 elif code_string[pc] == ".":  # Output memory val as char
                     if stack[pointer] == 92:  # Fixing escape code issue
-                        console_field_val += "\\"
+                        out_console_field_val += "\\"
                     else:
-                        console_field_val += chr(stack[pointer])
+                        out_console_field_val += chr(stack[pointer])
 
                 elif code_string[pc] == ",":  # Input char as val
                     input_info_message = await ctx.send("Do *input <char>")
@@ -226,10 +226,10 @@ class MainCog(commands.Cog):
 
                             # chars != 1
                             else:
-                                error_field_val += "**Error** Input only takes a single character\n"
-                                error_embed.set_field_at(index=0, name="**Error output**", value=error_field_val,
+                                sys_console_field_val += "**Error** Input only takes a single character\n"
+                                sys_console_embed.set_field_at(index=0, name="**Error output**", value=sys_console_field_val,
                                                          inline=False)
-                                await error_message.edit(embed=error_embed)
+                                await sys_console_message.edit(embed=sys_console_embed)
 
                         # Deleting message if input
                         if user_inp_message.content[:6] == "*input" or user_inp_message.content[:2] == "*i":
@@ -247,17 +247,17 @@ class MainCog(commands.Cog):
                         del loops[-1]
 
                 else:  # Illegal value
-                    error_field_val += "**Error** Ignored invalid instruction '" + code_string[pc] + "'\n"
-                    error_embed.set_field_at(index=0, name="**Error output**", value=error_field_val, inline=False)
-                    await error_message.edit(embed=error_embed)
+                    sys_console_field_val += "**Error** Ignored invalid instruction '" + code_string[pc] + "'\n"
+                    sys_console_embed.set_field_at(index=0, name="**Error output**", value=sys_console_field_val, inline=False)
+                    await sys_console_message.edit(embed=sys_console_embed)
                 pc += 1
 
-            console_field_val += "```"
-            if console_field_val == "``````":
-                console_field_val = "None"
+            out_console_field_val += "```"
+            if out_console_field_val == "``````":
+                out_console_field_val = "None"
 
-            console_embed.set_field_at(index=0, name="**Code output**", value=console_field_val, inline=False)
-            await console_message.edit(embed=console_embed)
+            out_console_embed.set_field_at(index=0, name="**Code output**", value=out_console_field_val, inline=False)
+            await out_console_message.edit(embed=out_console_embed)
 
     @commands.command(name="input", aliases=["i"])
     async def null_commands(self, *args):
